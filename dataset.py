@@ -1,4 +1,3 @@
-#!/usr/bin/python
 # encoding: utf-8
 
 import random
@@ -11,6 +10,7 @@ import six
 import sys
 from PIL import Image
 import numpy as np
+import io
 
 
 class lmdbDataset(Dataset):
@@ -29,7 +29,7 @@ class lmdbDataset(Dataset):
             sys.exit(0)
 
         with self.env.begin(write=False) as txn:
-            nSamples = int(txn.get('num-samples'))
+            nSamples = int(txn.get('num-samples'.encode()))
             self.nSamples = nSamples
 
         self.transform = transform
@@ -42,14 +42,20 @@ class lmdbDataset(Dataset):
         assert index <= len(self), 'index range error'
         index += 1
         with self.env.begin(write=False) as txn:
-            img_key = 'image-%09d' % index
-            imgbuf = txn.get(img_key)
+            label_key = 'label-%09d'.encode() % index
+            label = txn.get(label_key).decode('utf-8')
+            img_key = 'image-%09d'.encode() % index
+            imgbuf = txn.get(img_key)            
 
             buf = six.BytesIO()
             buf.write(imgbuf)
             buf.seek(0)
+#             buf = io.BytesIO(imgbuf)
+#             buf.seek(0)
+#             print(buf.read())
+
             try:
-                img = Image.open(buf).convert('L')
+                img = Image.open(buf)
             except IOError:
                 print('Corrupted image for %d' % index)
                 return self[index + 1]
@@ -57,8 +63,6 @@ class lmdbDataset(Dataset):
             if self.transform is not None:
                 img = self.transform(img)
 
-            label_key = 'label-%09d' % index
-            label = str(txn.get(label_key))
 
             if self.target_transform is not None:
                 label = self.target_transform(label)
@@ -134,3 +138,4 @@ class alignCollate(object):
         images = torch.cat([t.unsqueeze(0) for t in images], 0)
 
         return images, labels
+
