@@ -10,7 +10,7 @@ import models.crnn as crnn
 
 
 model_path = "/home/vit01/expr/netCRNN_24_1000.pth"
-img_path = "/home/vit01/reg_images_list_with-p,a(80000)/79pa9a6565.png"
+img_path = "/home/vit01/reg_images_list_with-p,a(80000)/ansdbajsdb.png"
 
 
 alphabet = '0123456789abcdefghijklmnopqrstuvwxyz'
